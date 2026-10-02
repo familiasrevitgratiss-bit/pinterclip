@@ -1,0 +1,46 @@
+{
+  "general": {
+    "siteName": "PinterClip",
+    "siteUrl": "https://pinterclip.com",
+    "adminPassword": "admin",
+    "announcementEnabled": false,
+    "announcementText": "¡Descargas de videos y fotos de Pinterest en Máxima Calidad sin límites!",
+    "contactEmail": "contact@pinterclip.com"
+  },
+  "monetization": {
+    "adsEnabled": false,
+    "adsensePublisherId": "",
+    "adsenseAutoAds": true,
+    "mediavineScript": "",
+    "slotSkyscraperLeft": "",
+    "slotSkyscraperRight": "",
+    "slotLeaderboard": "",
+    "rewardedAdTimerSeconds": 5,
+    "adsTxtContent": "# PinterClip ads.txt\n# Agrega tus lineas de Google AdSense o Mediavine aqui:\n# google.com, pub-XXXXXXXXXXXXXXXX, DIRECT, f08c47fec0942fa0",
+    "slots": {
+      "leftSkyscraper": "",
+      "rightSkyscraper": "",
+      "leaderboard": "",
+      "rectangle": ""
+    },
+    "rewardedAdCooldownSeconds": 0
+  },
+  "cloudflare": {
+    "analyticsToken": "",
+    "turnstileSiteKey": "",
+    "zoneId": "",
+    "apiToken": "",
+    "hostingIp": "",
+    "turnstileSecretKey": ""
+  },
+  "github": {
+    "repoUrl": "",
+    "deployWebhookUrl": ""
+  },
+  "codeInjection": {
+    "headScripts": "",
+    "bodyScripts": "",
+    "googleSearchConsoleTag": ""
+  },
+  "adminPassword": "admin"
+}
