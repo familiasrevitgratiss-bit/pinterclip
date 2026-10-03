@@ -34,7 +34,7 @@
     "turnstileSecretKey": ""
   },
   "github": {
-    "repoUrl": "",
+    "repoUrl": "https://github.com/familiasrevitgratiss-bit/pinterclip",
     "deployWebhookUrl": ""
   },
   "codeInjection": {
