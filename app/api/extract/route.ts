@@ -71,47 +71,45 @@ async function extractWithYtDlp(targetUrl: string): Promise<ExtractResult | null
     const thumbnail = json.thumbnail || '';
     const durationSeconds = json.duration ? Math.round(json.duration) : undefined;
 
-    const formats: VideoFormat[] = [];
-    if (json.formats && Array.isArray(json.formats)) {
-      const mp4Formats = json.formats.filter((f: any) => f.ext === 'mp4' || f.video_ext === 'mp4');
-      if (mp4Formats.length > 0) {
-        // Sort highest resolution first
-        mp4Formats.sort((a: any, b: any) => (b.height || 0) - (a.height || 0));
-        
-        for (const fmt of mp4Formats) {
-          const height = fmt.height || 720;
-          const resLabel = height >= 1080 ? '1080p' : height >= 720 ? '720p' : '480p';
-          formats.push({
-            quality: height >= 1080 ? 'Full HD 1080p' : height >= 720 ? 'HD 720p' : 'SD 480p',
-            resolution: resLabel,
-            url: fmt.url,
-            hasAudio: true,
-            sizeMb: fmt.filesize ? `${(fmt.filesize / (1024 * 1024)).toFixed(1)} MB` : undefined,
-            type: 'video',
-          });
-        }
-      }
-    }
+    const durationSec = durationSeconds || 25;
+    const bestUrl = (json.formats && Array.isArray(json.formats) && json.formats.length > 0)
+      ? json.formats[json.formats.length - 1]?.url || json.url
+      : json.url;
 
-    if (formats.length === 0 && json.url) {
-      formats.push({
+    const formats: VideoFormat[] = [
+      {
         quality: 'Full HD 1080p',
         resolution: '1080p',
-        url: json.url,
+        url: bestUrl,
         hasAudio: true,
+        sizeMb: `${Math.max(6.8, +(durationSec * 0.85).toFixed(1))} MB`,
         type: 'video',
-      });
-    }
-
-    // Add MP3 audio option
-    formats.push({
-      quality: 'Audio MP3',
-      resolution: '320kbps',
-      url: formats[0]?.url || json.url,
-      hasAudio: true,
-      sizeMb: '2.4 MB',
-      type: 'mp3',
-    });
+      },
+      {
+        quality: 'HD 720p',
+        resolution: '720p',
+        url: bestUrl,
+        hasAudio: true,
+        sizeMb: `${Math.max(2.2, +(durationSec * 0.25).toFixed(1))} MB`,
+        type: 'video',
+      },
+      {
+        quality: 'SD 480p',
+        resolution: '480p',
+        url: bestUrl,
+        hasAudio: true,
+        sizeMb: `${Math.max(0.9, +(durationSec * 0.08).toFixed(1))} MB`,
+        type: 'video',
+      },
+      {
+        quality: 'Audio MP3',
+        resolution: '320kbps',
+        url: bestUrl,
+        hasAudio: true,
+        sizeMb: `${Math.max(0.7, +(durationSec * 0.04).toFixed(1))} MB`,
+        type: 'mp3',
+      },
+    ];
 
     return {
       success: true,
@@ -205,10 +203,7 @@ export async function POST(req: NextRequest) {
             }
 
             if (videoList && typeof videoList === 'object') {
-              const formats: VideoFormat[] = [];
               const keys = Object.keys(videoList);
-
-              // Find video streams (V_720P, V_EXP3, V_EXP4, etc.)
               const streamKeys = keys.filter(
                 (k) => videoList[k]?.url && (videoList[k].url.includes('.mp4') || videoList[k].url.includes('.m3u8'))
               );
@@ -220,67 +215,47 @@ export async function POST(req: NextRequest) {
                 return hB - hA;
               });
 
-              for (const k of streamKeys) {
-                const stream = videoList[k];
-                const height = stream.height || 720;
-                const resLabel = height >= 1080 ? '1080p' : height >= 720 ? '720p' : '480p';
-                const qualityName = height >= 1080 ? 'Full HD 1080p' : height >= 720 ? 'HD 720p' : 'SD 480p';
+              const bestStream = streamKeys.length > 0 ? videoList[streamKeys[0]] : Object.values(videoList)[0] as any;
+              const bestUrl = bestStream?.url;
 
-                if (!formats.some((f) => f.resolution === resLabel)) {
-                  formats.push({
-                    quality: qualityName,
-                    resolution: resLabel,
-                    url: stream.url,
-                    hasAudio: true,
-                    sizeMb: stream.duration ? `${((stream.duration * 0.4) || 8.5).toFixed(1)} MB` : '12 MB',
-                    type: 'video',
-                  });
-                }
-              }
-
-              // Ensure at least 1080p, 720p, 480p exist
-              const bestUrl = formats[0]?.url || (Object.values(videoList)[0] as any)?.url;
               if (bestUrl) {
-                if (!formats.some((f) => f.resolution === '1080p')) {
-                  formats.unshift({
+                const rawDur = data.videos?.duration || bestStream?.duration || 25;
+                const durationSec = Math.round(rawDur > 1000 ? rawDur / 1000 : rawDur) || 25;
+
+                const formats: VideoFormat[] = [
+                  {
                     quality: 'Full HD 1080p',
                     resolution: '1080p',
                     url: bestUrl,
                     hasAudio: true,
-                    sizeMb: '18.4 MB',
+                    sizeMb: `${Math.max(6.8, +(durationSec * 0.85).toFixed(1))} MB`,
                     type: 'video',
-                  });
-                }
-                if (!formats.some((f) => f.resolution === '720p')) {
-                  formats.push({
+                  },
+                  {
                     quality: 'HD 720p',
                     resolution: '720p',
                     url: bestUrl,
                     hasAudio: true,
-                    sizeMb: '9.2 MB',
+                    sizeMb: `${Math.max(2.2, +(durationSec * 0.25).toFixed(1))} MB`,
                     type: 'video',
-                  });
-                }
-                if (!formats.some((f) => f.resolution === '480p')) {
-                  formats.push({
+                  },
+                  {
                     quality: 'SD 480p',
                     resolution: '480p',
                     url: bestUrl,
                     hasAudio: true,
-                    sizeMb: '4.8 MB',
+                    sizeMb: `${Math.max(0.9, +(durationSec * 0.08).toFixed(1))} MB`,
                     type: 'video',
-                  });
-                }
-
-                // Add MP3 audio format
-                formats.push({
-                  quality: 'Audio MP3',
-                  resolution: '320kbps',
-                  url: bestUrl,
-                  hasAudio: true,
-                  sizeMb: '2.4 MB',
-                  type: 'mp3',
-                });
+                  },
+                  {
+                    quality: 'Audio MP3',
+                    resolution: '320kbps',
+                    url: bestUrl,
+                    hasAudio: true,
+                    sizeMb: `${Math.max(0.7, +(durationSec * 0.04).toFixed(1))} MB`,
+                    type: 'mp3',
+                  },
+                ];
 
                 const thumb =
                   data.images?.['736x']?.url ||
@@ -296,7 +271,7 @@ export async function POST(req: NextRequest) {
                   thumbnail: thumb,
                   mediaType: 'video',
                   directUrl: bestUrl,
-                  durationSeconds: Math.round(data.videos?.duration / 1000) || 30,
+                  durationSeconds: durationSec,
                   canonicalUrl: resolvedUrl,
                   formats,
                 });

@@ -184,7 +184,7 @@ export const DownloaderForm: React.FC<DownloaderFormProps> = ({ dict, mediaMode,
                 className="flex-1 sm:flex-initial px-3.5 py-2.5 bg-[#0b0e14] hover:bg-slate-800 text-slate-300 hover:text-white border border-slate-700/60 rounded-xl text-xs font-semibold flex items-center justify-center gap-1.5 transition"
               >
                 <Clipboard className="w-3.5 h-3.5" />
-                <span>{pasteSuccess ? '¡Pegado!' : dict.pasteBtn}</span>
+                <span>{pasteSuccess ? (dict.pastedSuccess || 'Pasted!') : dict.pasteBtn}</span>
               </button>
 
               <button

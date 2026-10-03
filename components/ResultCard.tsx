@@ -28,6 +28,43 @@ export const ResultCard: React.FC<ResultCardProps> = ({
   const [videoTab, setVideoTab] = useState<'1080p' | '720p' | '480p' | 'mp3'>('1080p');
   const [isPlayingPreview, setIsPlayingPreview] = useState(false);
 
+  // Background Pre-generation: As soon as result appears, warm up 1080p so download is instant!
+  React.useEffect(() => {
+    if (isVideo && (data.directUrl || data.canonicalUrl)) {
+      fetch('/api/download', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          url: data.directUrl || data.canonicalUrl,
+          mediaType: 'video',
+          title: data.title,
+          quality: 'Full HD 1080p',
+          resolution: '1080p',
+          preheat: true,
+        }),
+      }).catch(() => {});
+    }
+  }, [data, isVideo]);
+
+  const handleTabChange = (tab: '1080p' | '720p' | '480p' | 'mp3') => {
+    setVideoTab(tab);
+    if (isVideo && (data.directUrl || data.canonicalUrl)) {
+      fetch('/api/download', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          url: data.directUrl || data.canonicalUrl,
+          mediaType: tab === 'mp3' ? 'mp3' : 'video',
+          isAudioOnly: tab === 'mp3',
+          title: data.title,
+          quality: tab === '1080p' ? 'Full HD 1080p' : tab === '720p' ? 'HD 720p' : tab === '480p' ? 'SD 480p' : 'Audio MP3',
+          resolution: tab,
+          preheat: true,
+        }),
+      }).catch(() => {});
+    }
+  };
+
   // Video Formats
   const format1080 = data.formats.find((f) => f.resolution === '1080p') || {
     quality: 'Full HD 1080p',
@@ -145,7 +182,7 @@ export const ResultCard: React.FC<ResultCardProps> = ({
           {isImage
             ? dict.imageResolution
             : isGif
-            ? 'GIF ANIMADO'
+            ? dict.gifBadge
             : isMp3
             ? '320 KBPS'
             : videoTab === '1080p'
@@ -280,7 +317,7 @@ export const ResultCard: React.FC<ResultCardProps> = ({
         {isVideo && (
           <div className="grid grid-cols-4 gap-1.5 p-1 bg-[#0a0d12] border border-slate-800 rounded-xl text-xs font-bold">
             <button
-              onClick={() => setVideoTab('1080p')}
+              onClick={() => handleTabChange('1080p')}
               className={`py-2 px-1 rounded-lg flex flex-col items-center justify-center transition ${
                 videoTab === '1080p'
                   ? 'bg-[#e60023] text-white shadow-lg shadow-[#e60023]/25'
@@ -290,15 +327,15 @@ export const ResultCard: React.FC<ResultCardProps> = ({
               <span>1080p HD</span>
               <span
                 className={`text-[8px] font-black px-1 rounded mt-0.5 ${
-                  videoTab === '1080p' ? 'bg-black/30 text-white' : 'bg-amber-500/20 text-amber-400'
+                  videoTab === '1080p' ? 'bg-black/30 text-white' : 'bg-emerald-500/20 text-emerald-400'
                 }`}
               >
-                {dict.tabWithAd}
+                ULTRA HD
               </span>
             </button>
 
             <button
-              onClick={() => setVideoTab('720p')}
+              onClick={() => handleTabChange('720p')}
               className={`py-2 px-1 rounded-lg flex flex-col items-center justify-center transition ${
                 videoTab === '720p'
                   ? 'bg-blue-600 text-white shadow-lg shadow-blue-600/25'
@@ -310,7 +347,7 @@ export const ResultCard: React.FC<ResultCardProps> = ({
             </button>
 
             <button
-              onClick={() => setVideoTab('480p')}
+              onClick={() => handleTabChange('480p')}
               className={`py-2 px-1 rounded-lg flex flex-col items-center justify-center transition ${
                 videoTab === '480p'
                   ? 'bg-slate-700 text-white shadow-lg'
@@ -322,7 +359,7 @@ export const ResultCard: React.FC<ResultCardProps> = ({
             </button>
 
             <button
-              onClick={() => setVideoTab('mp3')}
+              onClick={() => handleTabChange('mp3')}
               className={`py-2 px-1 rounded-lg flex flex-col items-center justify-center transition ${
                 videoTab === 'mp3'
                   ? 'bg-amber-600 text-white shadow-lg'
@@ -368,7 +405,7 @@ export const ResultCard: React.FC<ResultCardProps> = ({
               : isGif
               ? currentSelectedFormat.resolution === 'GIF'
                 ? dict.downloadGif
-                : 'Descargar MP4'
+                : `${dict.downloadVideoGeneric} MP4`
               : isMp3 || (isVideo && videoTab === 'mp3')
               ? dict.downloadAudioOnly
               : videoTab === '1080p'
@@ -378,7 +415,7 @@ export const ResultCard: React.FC<ResultCardProps> = ({
 
           {isVideo && videoTab === '1080p' && (
             <span className="px-2 py-0.5 bg-black/30 border border-white/20 rounded-md text-[10px] font-mono tracking-wider">
-              {dict.tabWithAd}
+              ULTRA HD
             </span>
           )}
 
@@ -400,13 +437,6 @@ export const ResultCard: React.FC<ResultCardProps> = ({
             </span>
           )}
         </button>
-
-        {/* Disclaimer for ad notice */}
-        {isVideo && videoTab === '1080p' && (
-          <p className="text-[10px] text-slate-500 text-center">
-            {dict.adNotice}
-          </p>
-        )}
 
         {/* Download Another Button */}
         <div className="pt-2 text-center">

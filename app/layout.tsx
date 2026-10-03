@@ -75,6 +75,8 @@ export default function RootLayout({
   const cfAnalyticsToken = config?.cloudflare?.analyticsToken;
   const headScripts = config?.codeInjection?.headScripts;
   const bodyScripts = config?.codeInjection?.bodyScripts;
+  const gaId = config?.codeInjection?.googleAnalyticsId;
+  const gscTag = config?.codeInjection?.googleSearchConsoleTag;
 
   // JSON-LD structured data for Google Search rich snippet
   const jsonLd = {
@@ -102,6 +104,16 @@ export default function RootLayout({
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
         />
+        {gscTag && (
+          gscTag.includes('<meta') ? (
+            <div
+              style={{ display: 'none' }}
+              dangerouslySetInnerHTML={{ __html: gscTag }}
+            />
+          ) : (
+            <meta name="google-site-verification" content={gscTag} />
+          )
+        )}
         {adsenseId && (
           <script
             async
@@ -117,6 +129,25 @@ export default function RootLayout({
         )}
       </head>
       <body className="min-h-full flex flex-col bg-[#0b0e14] text-slate-100">
+        {gaId && (
+          <>
+            <Script
+              strategy="afterInteractive"
+              src={`https://www.googletagmanager.com/gtag/js?id=${gaId}`}
+            />
+            <Script
+              id="google-analytics"
+              strategy="afterInteractive"
+            >
+              {`
+                window.dataLayer = window.dataLayer || [];
+                function gtag(){dataLayer.push(arguments);}
+                gtag('js', new Date());
+                gtag('config', '${gaId}');
+              `}
+            </Script>
+          </>
+        )}
         {children}
         {cfAnalyticsToken && (
           <script

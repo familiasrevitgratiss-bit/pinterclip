@@ -44,6 +44,7 @@ export interface SiteConfig {
     headScripts?: string;
     bodyScripts?: string;
     googleSearchConsoleTag?: string;
+    googleAnalyticsId?: string;
   };
   adminPassword?: string;
 }
@@ -91,7 +92,8 @@ const DEFAULT_CONFIG: SiteConfig = {
   codeInjection: {
     headScripts: '',
     bodyScripts: '',
-    googleSearchConsoleTag: ''
+    googleSearchConsoleTag: '',
+    googleAnalyticsId: '',
   },
   adminPassword: 'admin'
 };

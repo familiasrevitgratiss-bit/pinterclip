@@ -38,6 +38,8 @@ interface SiteConfig {
   codeInjection: {
     headScripts: string;
     bodyScripts: string;
+    googleSearchConsoleTag?: string;
+    googleAnalyticsId?: string;
   };
   adminPassword?: string;
 }
@@ -1053,10 +1055,76 @@ export default function AdminPinterClipPage() {
                 <div>
                   <h2 className="text-base font-bold text-slate-100">Inyección de Código Global</h2>
                   <p className="text-xs text-slate-400">
-                    Inserta scripts, tags de verificación de Google Search Console, Google Analytics 4, o widgets sin tocar el código fuente.
+                    Inserta Google Analytics 4, verificación de Google Search Console, scripts personalizados o widgets sin tocar el servidor.
                   </p>
                 </div>
               </div>
+            </div>
+
+            {/* Google Analytics 4 */}
+            <div className="bg-[#161b22] border border-slate-800 rounded-2xl p-6 shadow-sm">
+              <div className="flex items-center justify-between mb-2">
+                <label className="text-xs font-bold text-slate-200 uppercase tracking-wider flex items-center gap-2">
+                  <span>📊</span> Google Analytics 4 (Measurement ID)
+                </label>
+                {config.codeInjection?.googleAnalyticsId ? (
+                  <span className="px-2 py-0.5 rounded text-[11px] font-medium bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                    Activo
+                  </span>
+                ) : (
+                  <span className="px-2 py-0.5 rounded text-[11px] font-medium bg-slate-800 text-slate-400">
+                    No configurado
+                  </span>
+                )}
+              </div>
+              <p className="text-xs text-slate-400 mb-3">
+                Ingresa tu ID de medición de flujo web de GA4 (comienza con <code>G-</code>). El script oficial de gtag.js se inyectará automáticamente en todas las páginas.
+              </p>
+              <input
+                type="text"
+                value={config.codeInjection?.googleAnalyticsId || ''}
+                onChange={(e) =>
+                  setConfig({
+                    ...config,
+                    codeInjection: { ...config.codeInjection, googleAnalyticsId: e.target.value.trim() },
+                  })
+                }
+                placeholder="G-XXXXXXXXXX"
+                className="w-full px-4 py-2.5 bg-[#0d1117] border border-slate-700 rounded-xl text-slate-100 text-sm font-mono focus:border-red-500 focus:outline-none"
+              />
+            </div>
+
+            {/* Google Search Console */}
+            <div className="bg-[#161b22] border border-slate-800 rounded-2xl p-6 shadow-sm">
+              <div className="flex items-center justify-between mb-2">
+                <label className="text-xs font-bold text-slate-200 uppercase tracking-wider flex items-center gap-2">
+                  <span>🔍</span> Google Search Console (Meta Tag)
+                </label>
+                {config.codeInjection?.googleSearchConsoleTag ? (
+                  <span className="px-2 py-0.5 rounded text-[11px] font-medium bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                    Configurado
+                  </span>
+                ) : (
+                  <span className="px-2 py-0.5 rounded text-[11px] font-medium bg-slate-800 text-slate-400">
+                    Opcional
+                  </span>
+                )}
+              </div>
+              <p className="text-xs text-slate-400 mb-3">
+                Ingresa el código de verificación o la etiqueta completa <code>&lt;meta name=&quot;google-site-verification&quot; content=&quot;...&quot; /&gt;</code>.
+              </p>
+              <input
+                type="text"
+                value={config.codeInjection?.googleSearchConsoleTag || ''}
+                onChange={(e) =>
+                  setConfig({
+                    ...config,
+                    codeInjection: { ...config.codeInjection, googleSearchConsoleTag: e.target.value.trim() },
+                  })
+                }
+                placeholder="google-site-verification=XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"
+                className="w-full px-4 py-2.5 bg-[#0d1117] border border-slate-700 rounded-xl text-slate-100 text-sm font-mono focus:border-red-500 focus:outline-none"
+              />
             </div>
 
             {/* Head Scripts */}

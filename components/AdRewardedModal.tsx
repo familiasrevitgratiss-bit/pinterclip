@@ -80,7 +80,7 @@ export const AdRewardedModal: React.FC<AdRewardedModalProps> = ({
               ? 'bg-slate-800 hover:bg-slate-700 text-slate-200 hover:text-white'
               : 'bg-slate-900 text-slate-600 cursor-not-allowed'
           }`}
-          title={canClose ? dict.rewardedCloseBtn : 'Espera el temporizador'}
+          title={canClose ? dict.rewardedCloseBtn : (dict.waitTimer || 'Please wait for timer')}
         >
           <X className="w-5 h-5" />
         </button>
@@ -95,10 +95,10 @@ export const AdRewardedModal: React.FC<AdRewardedModalProps> = ({
         {/* Title & Description */}
         <div className="space-y-1.5">
           <h3 className="text-lg font-black text-white">
-            {canClose ? '¡Descarga Desbloqueada!' : dict.rewardedAdTitle}
+            {canClose ? (dict.downloadUnlockedTitle || 'Download Unlocked!') : dict.rewardedAdTitle}
           </h3>
           <p className="text-xs text-slate-400">
-            {canClose ? `Tu archivo en calidad ${formatTitle} está listo para descargar.` : dict.rewardedAdSubtitle}
+            {canClose ? (dict.downloadUnlockedDesc || 'Your file is ready to download.') : dict.rewardedAdSubtitle}
           </p>
         </div>
 
@@ -107,10 +107,10 @@ export const AdRewardedModal: React.FC<AdRewardedModalProps> = ({
           {canClose ? (
             <div className="space-y-2">
               <span className="text-xs font-bold text-emerald-400 uppercase tracking-wider">
-                ✓ Recompensa completada
+                ✓ {dict.rewardCompleted || 'Reward Completed'}
               </span>
               <p className="text-xs text-slate-300">
-                Haz clic en el botón de abajo para iniciar la descarga inmediata.
+                {dict.rewardCompletedAction || 'Click the button below to start your download immediately.'}
               </p>
             </div>
           ) : (

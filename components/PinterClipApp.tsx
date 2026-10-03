@@ -124,7 +124,7 @@ export const PinterClipApp: React.FC<PinterClipAppProps> = ({
   const executeDownload = async (targetFormat: VideoFormat) => {
     if (!extractData) return;
 
-    setDownloadToast(dict.analyzingReddit || 'Procesando descarga...');
+    setDownloadToast(dict.downloadProcessing || dict.analyzingPinterest || 'Processing download...');
 
     try {
       const isAudioOnly = targetFormat.quality?.includes('MP3') || mediaMode === 'mp3';
@@ -141,7 +141,8 @@ export const PinterClipApp: React.FC<PinterClipAppProps> = ({
           mediaType,
           directUrl,
           title: extractData.title,
-          quality: targetFormat.quality
+          quality: targetFormat.quality,
+          resolution: targetFormat.resolution,
         }),
       });
 
@@ -167,12 +168,12 @@ export const PinterClipApp: React.FC<PinterClipAppProps> = ({
         element.click();
         document.body.removeChild(element);
 
-        setDownloadToast(dict.downloadStarting || `¡Descarga iniciada! (${targetFormat.quality})`);
+        setDownloadToast(dict.downloadStarting || `Download started! (${targetFormat.quality})`);
       } else {
-        setDownloadToast(data.error || 'Error al descargar el archivo.');
+        setDownloadToast(dict.downloadError || data.error || 'Error downloading file.');
       }
     } catch {
-      setDownloadToast('Error de comunicación con el motor de descarga.');
+      setDownloadToast(dict.connectionError || 'Connection error with download engine.');
     }
 
     setTimeout(() => setDownloadToast(null), 6000);

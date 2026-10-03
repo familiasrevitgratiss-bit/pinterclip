@@ -143,6 +143,17 @@ export interface Translation {
   downloadImage: string;
   downloadGif: string;
   imageResolution: string;
+
+  // Localized interaction & toast strings
+  downloadProcessing?: string;
+  downloadUnlockedTitle?: string;
+  downloadUnlockedDesc?: string;
+  rewardCompleted?: string;
+  rewardCompletedAction?: string;
+  waitTimer?: string;
+  pastedSuccess?: string;
+  downloadError?: string;
+  connectionError?: string;
 }
 
 // Diccionarios completos para los 14 idiomas

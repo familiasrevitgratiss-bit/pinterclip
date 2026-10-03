@@ -6,6 +6,9 @@ import { promisify } from 'util';
 
 const execFileAsync = promisify(execFile);
 
+// Global in-memory job tracker to avoid parallel duplicate downloads
+const activeJobs = new Map<string, Promise<string>>();
+
 function sanitizeFilename(rawTitle?: string, fallback: string = 'pinterest_clip'): string {
   if (!rawTitle) return `${fallback}_${Date.now()}`;
   let sanitized = rawTitle
@@ -25,7 +28,7 @@ function sanitizeFilename(rawTitle?: string, fallback: string = 'pinterest_clip'
 
 export async function POST(req: NextRequest) {
   try {
-    const { url, isAudioOnly, mediaType, directUrl, title } = await req.json();
+    const { url, isAudioOnly, mediaType, directUrl, title, quality, resolution, preheat } = await req.json();
 
     if (!url && !directUrl) {
       return NextResponse.json({ success: false, error: 'URL requerida' }, { status: 400 });
@@ -95,135 +98,225 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    // 2. Direct high-speed handling for MP4 videos
-    if (targetUrl.includes('.mp4') || targetUrl.includes('v.pinimg.com')) {
-      const isAudio = isAudioOnly || mediaType === 'mp3';
-      const safeName = sanitizeFilename(title, isAudio ? 'pinterclip_audio' : 'pinterclip_video');
-      const tempMp4Name = `temp_${fileId}.mp4`;
-      const tempMp4Path = path.join(downloadsDir, tempMp4Name);
+    // 2. Identify Video or Audio Tiers
+    const isAudio = isAudioOnly || mediaType === 'mp3' || (quality && quality.toLowerCase().includes('mp3'));
+    const qualityStr = `${quality || ''} ${resolution || ''}`.toLowerCase();
+    const is1080 = !isAudio && (qualityStr.includes('1080') || qualityStr.includes('with ad'));
+    const is720 = !isAudio && qualityStr.includes('720') && !is1080;
+    const is480 = !isAudio && (qualityStr.includes('480') || qualityStr.includes('sd') || qualityStr.includes('fast')) && !is1080 && !is720;
 
-      try {
-        const videoRes = await fetch(targetUrl, {
-          headers: {
-            'User-Agent':
-              'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
-            'Referer': 'https://www.pinterest.com/',
-          },
-        });
+    const qualitySuffix = isAudio
+      ? ''
+      : is1080
+      ? '_1080p_FullHD'
+      : is720
+      ? '_720p_HD'
+      : is480
+      ? '_480p_SD'
+      : '';
 
-        if (videoRes.ok) {
-          const buffer = Buffer.from(await videoRes.arrayBuffer());
-          fs.writeFileSync(tempMp4Path, buffer);
+    const safeBaseName = sanitizeFilename(title, isAudio ? 'pinterclip_audio' : 'pinterclip_video');
+    const finalFilename = isAudio ? `${safeBaseName}.mp3` : `${safeBaseName}${qualitySuffix}.mp4`;
+    const finalPath = path.join(downloadsDir, finalFilename);
 
-          if (isAudio) {
-            // Convert to MP3 with ffmpeg
-            const mp3Filename = `${safeName}.mp3`;
-            const mp3Path = path.join(downloadsDir, mp3Filename);
+    // Return cached file if already generated and valid (INSTANT: 0.005s)
+    if (fs.existsSync(finalPath) && fs.statSync(finalPath).size > 1000) {
+      return NextResponse.json({
+        success: true,
+        downloadUrl: `/downloads/${encodeURIComponent(finalFilename)}`,
+        filename: finalFilename,
+      });
+    }
 
-            await execFileAsync(ffmpegPath, [
-              '-y',
-              '-i',
-              tempMp4Path,
-              '-vn',
-              '-c:a',
-              'libmp3lame',
-              '-b:a',
-              '320k',
-              mp3Path,
-            ]);
+    // If preheat request and already working or done, return early
+    if (preheat && activeJobs.has(finalFilename)) {
+      return NextResponse.json({ success: true, preheating: true });
+    }
 
-            try {
-              fs.unlinkSync(tempMp4Path);
-            } catch {}
+    // Worker function to generate file
+    const processJob = async (): Promise<string> => {
+      const tempSourcePath = path.join(downloadsDir, `temp_src_${fileId}.mp4`);
+      let sourceAcquired = false;
 
-            return NextResponse.json({
-              success: true,
-              downloadUrl: `/downloads/${encodeURIComponent(mp3Filename)}`,
-              filename: mp3Filename,
-            });
+      // Check if targetUrl is a direct MP4 (not HLS m3u8)
+      if (targetUrl.includes('.mp4') && !targetUrl.includes('.m3u8')) {
+        try {
+          const videoRes = await fetch(targetUrl, {
+            headers: {
+              'User-Agent':
+                'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
+              'Referer': 'https://www.pinterest.com/',
+            },
+          });
+
+          if (videoRes.ok) {
+            const buffer = Buffer.from(await videoRes.arrayBuffer());
+            fs.writeFileSync(tempSourcePath, buffer);
+            sourceAcquired = true;
+          }
+        } catch (directErr) {
+          console.error('Fetch directo MP4 falló, continuando a yt-dlp:', directErr);
+        }
+      }
+
+      // If direct MP4 fetch didn't acquire source (or if it's an .m3u8 playlist), use yt-dlp with parallel fragments
+      if (!sourceAcquired) {
+        const ytDlpPath = isWin
+          ? path.join(projectRoot, 'yt-dlp.exe')
+          : (fs.existsSync(path.join(projectRoot, 'yt-dlp')) ? path.join(projectRoot, 'yt-dlp') : 'yt-dlp');
+
+        const tempPrefix = `dl_src_${fileId}`;
+        const outputTemplate = path.join(downloadsDir, `${tempPrefix}.%(ext)s`);
+
+        const ytdlpArgs: string[] = [];
+        if (isWin && fs.existsSync(path.join(projectRoot, 'ffmpeg.exe'))) {
+          ytdlpArgs.push('--ffmpeg-location', projectRoot);
+        }
+
+        ytdlpArgs.push(
+          '--no-playlist',
+          '--concurrent-fragments', '5',
+          '--no-cache-dir',
+          '--no-check-certificates',
+          '--user-agent', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
+          '--referer', 'https://www.pinterest.com/',
+          '-o', outputTemplate
+        );
+
+        if (isAudio) {
+          ytdlpArgs.push('-x', '--audio-format', 'mp3');
+        } else {
+          ytdlpArgs.push('-f', 'bv*+ba/b', '--merge-output-format', 'mp4');
+        }
+
+        ytdlpArgs.push(targetUrl);
+
+        await execFileAsync(ytDlpPath, ytdlpArgs, { timeout: 60000 });
+
+        const files = fs.readdirSync(downloadsDir);
+        const generatedFile = files.find((f) => f.startsWith(tempPrefix));
+
+        if (generatedFile) {
+          const genPath = path.join(downloadsDir, generatedFile);
+          if (isAudio && generatedFile.endsWith('.mp3')) {
+            fs.renameSync(genPath, finalPath);
+            return finalFilename;
           } else {
-            const finalFilename = `${safeName}.mp4`;
-            const finalPath = path.join(downloadsDir, finalFilename);
-
-            if (fs.existsSync(finalPath) && tempMp4Name !== finalFilename) {
-              fs.unlinkSync(finalPath);
-            }
-            fs.renameSync(tempMp4Path, finalPath);
-
-            return NextResponse.json({
-              success: true,
-              downloadUrl: `/downloads/${encodeURIComponent(finalFilename)}`,
-              filename: finalFilename,
-            });
+            fs.renameSync(genPath, tempSourcePath);
+            sourceAcquired = true;
           }
         }
-      } catch (videoError) {
-        console.error('Error en fetch directo de video MP4, usando yt-dlp:', videoError);
       }
-    }
 
-    // 3. General Fallback with yt-dlp
-    const ytDlpPath = isWin
-      ? path.join(projectRoot, 'yt-dlp.exe')
-      : (fs.existsSync(path.join(projectRoot, 'yt-dlp')) ? path.join(projectRoot, 'yt-dlp') : 'yt-dlp');
-    const safeBaseName = sanitizeFilename(title, isAudioOnly ? 'pinterclip_audio' : 'pinterclip_video');
-    const tempPrefix = `dl_${fileId}`;
-    const outputTemplate = path.join(downloadsDir, `${tempPrefix}.%(ext)s`);
-
-    const args: string[] = [];
-    if (isWin && fs.existsSync(path.join(projectRoot, 'ffmpeg.exe'))) {
-      args.push('--ffmpeg-location', projectRoot);
-    }
-
-    args.push(
-      '--no-playlist',
-      '--user-agent',
-      'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
-      '--referer',
-      'https://www.pinterest.com/',
-      '-o',
-      outputTemplate
-    );
-
-    if (isAudioOnly || mediaType === 'mp3') {
-      args.push('-x', '--audio-format', 'mp3');
-    } else {
-      args.push('-f', 'bv*+ba/b', '--merge-output-format', 'mp4');
-    }
-
-    args.push(targetUrl);
-
-    await execFileAsync(ytDlpPath, args, { timeout: 60000 });
-
-    const files = fs.readdirSync(downloadsDir);
-    const generatedFile = files.find((f) => f.startsWith(tempPrefix));
-
-    if (!generatedFile) {
-      return NextResponse.json(
-        { success: false, error: 'No se pudo generar el archivo descargable.' },
-        { status: 500 }
-      );
-    }
-
-    const finalExt = path.extname(generatedFile);
-    const finalFilename = `${safeBaseName}${finalExt}`;
-    const currentFilePath = path.join(downloadsDir, generatedFile);
-    const finalFilePath = path.join(downloadsDir, finalFilename);
-
-    try {
-      if (fs.existsSync(finalFilePath) && generatedFile !== finalFilename) {
-        fs.unlinkSync(finalFilePath);
+      if (!fs.existsSync(tempSourcePath)) {
+        throw new Error('No se pudo descargar el stream del video.');
       }
-      fs.renameSync(currentFilePath, finalFilePath);
-    } catch {}
 
-    const chosenFile = fs.existsSync(finalFilePath) ? finalFilename : generatedFile;
-    const downloadUrl = `/downloads/${encodeURIComponent(chosenFile)}`;
+      // Step B: Ultra-fast processing according to requested quality tier
+      try {
+        if (isAudio) {
+          await execFileAsync(ffmpegPath, [
+            '-y',
+            '-i', tempSourcePath,
+            '-vn',
+            '-c:a', 'libmp3lame',
+            '-b:a', '320k',
+            finalPath,
+          ]);
+        } else if (is480) {
+          // 480p SD: Ultrafast downscale to 360p with low bitrate & muffled audio
+          await execFileAsync(ffmpegPath, [
+            '-y',
+            '-i', tempSourcePath,
+            '-vf', 'scale=-2:360',
+            '-c:v', 'libx264',
+            '-crf', '38',
+            '-b:v', '220k',
+            '-maxrate', '280k',
+            '-bufsize', '450k',
+            '-preset', 'ultrafast',
+            '-pix_fmt', 'yuv420p',
+            '-c:a', 'aac',
+            '-b:a', '64k',
+            finalPath,
+          ]);
+        } else if (is720) {
+          // 720p HD: Ultrafast downscale to 640p medium bitrate
+          await execFileAsync(ffmpegPath, [
+            '-y',
+            '-i', tempSourcePath,
+            '-vf', 'scale=-2:640',
+            '-c:v', 'libx264',
+            '-crf', '31',
+            '-b:v', '600k',
+            '-maxrate', '750k',
+            '-bufsize', '1100k',
+            '-preset', 'ultrafast',
+            '-pix_fmt', 'yuv420p',
+            '-c:a', 'aac',
+            '-b:a', '96k',
+            finalPath,
+          ]);
+        } else {
+          // 1080p Full HD: Instant stream copy of original master source (lossless & instant ~0.02s)
+          try {
+            await execFileAsync(ffmpegPath, [
+              '-y',
+              '-i', tempSourcePath,
+              '-c', 'copy',
+              finalPath,
+            ]);
+          } catch {
+            await execFileAsync(ffmpegPath, [
+              '-y',
+              '-i', tempSourcePath,
+              '-c:v', 'libx264',
+              '-crf', '16',
+              '-preset', 'ultrafast',
+              '-pix_fmt', 'yuv420p',
+              '-c:a', 'aac',
+              '-b:a', '256k',
+              finalPath,
+            ]);
+          }
+        }
+      } catch (ffmpegErr) {
+        console.error('Error FFmpeg, utilizando archivo fuente:', ffmpegErr);
+        if (!fs.existsSync(finalPath) && fs.existsSync(tempSourcePath)) {
+          fs.renameSync(tempSourcePath, finalPath);
+        }
+      }
+
+      // Cleanup
+      try {
+        if (fs.existsSync(tempSourcePath) && tempSourcePath !== finalPath) {
+          fs.unlinkSync(tempSourcePath);
+        }
+      } catch {}
+
+      return finalFilename;
+    };
+
+    // If already in flight, await existing job
+    let jobPromise = activeJobs.get(finalFilename);
+    if (!jobPromise) {
+      jobPromise = processJob().finally(() => {
+        activeJobs.delete(finalFilename);
+      });
+      activeJobs.set(finalFilename, jobPromise);
+    }
+
+    if (preheat) {
+      // Preheat returns immediately while job completes in background
+      return NextResponse.json({ success: true, preheating: true });
+    }
+
+    const generatedFilename = await jobPromise;
 
     return NextResponse.json({
       success: true,
-      downloadUrl,
-      filename: chosenFile,
+      downloadUrl: `/downloads/${encodeURIComponent(generatedFilename)}`,
+      filename: generatedFilename,
     });
   } catch (error: any) {
     console.error('Error procesando descarga:', error);

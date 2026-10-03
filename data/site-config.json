@@ -40,7 +40,8 @@
   "codeInjection": {
     "headScripts": "",
     "bodyScripts": "",
-    "googleSearchConsoleTag": ""
+    "googleSearchConsoleTag": "",
+    "googleAnalyticsId": "G-J47QLH21R9"
   },
   "adminPassword": "admin"
 }
