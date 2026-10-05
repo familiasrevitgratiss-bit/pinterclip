@@ -24,6 +24,9 @@ interface ExtraTranslations {
   pastedSuccess: string;
   downloadError: string;
   connectionError: string;
+  networkFamilyTitle: string;
+  networkFamilyReddit: string;
+  networkFamilyTwitter: string;
 }
 
 const extraTranslations: Record<Language, ExtraTranslations> = {
@@ -37,6 +40,9 @@ const extraTranslations: Record<Language, ExtraTranslations> = {
     pastedSuccess: "Pasted!",
     downloadError: "Error downloading file. Please try again.",
     connectionError: "Connection error with download engine.",
+    networkFamilyTitle: "CLIP NETWORK FAMILY",
+    networkFamilyReddit: "ReddClip.com - Reddit Video Downloader",
+    networkFamilyTwitter: "TwitsClip.com - Twitter / X Video Downloader",
   },
   es: {
     downloadProcessing: "Procesando descarga...",
@@ -48,6 +54,9 @@ const extraTranslations: Record<Language, ExtraTranslations> = {
     pastedSuccess: "¡Pegado!",
     downloadError: "Error al descargar el archivo. Inténtalo de nuevo.",
     connectionError: "Error de conexión con el motor de descarga.",
+    networkFamilyTitle: "FAMILIA CLIP NETWORK",
+    networkFamilyReddit: "ReddClip.com - Descargador de Vídeos de Reddit",
+    networkFamilyTwitter: "TwitsClip.com - Descargador de Vídeos de Twitter / X",
   },
   de: {
     downloadProcessing: "Download wird verarbeitet...",
@@ -59,6 +68,9 @@ const extraTranslations: Record<Language, ExtraTranslations> = {
     pastedSuccess: "Eingefügt!",
     downloadError: "Fehler beim Herunterladen der Datei. Bitte versuchen Sie es erneut.",
     connectionError: "Verbindungsfehler mit der Download-Engine.",
+    networkFamilyTitle: "CLIP-NETZWERKFAMILIE",
+    networkFamilyReddit: "ReddClip.com - Reddit Video Downloader",
+    networkFamilyTwitter: "TwitsClip.com - Twitter / X Video Downloader",
   },
   fr: {
     downloadProcessing: "Traitement du téléchargement...",
@@ -70,6 +82,9 @@ const extraTranslations: Record<Language, ExtraTranslations> = {
     pastedSuccess: "Collé !",
     downloadError: "Erreur lors du téléchargement du fichier. Veuillez réessayer.",
     connectionError: "Erreur de connexion avec le moteur de téléchargement.",
+    networkFamilyTitle: "FAMILLE DE RÉSEAUX CLIP",
+    networkFamilyReddit: "ReddClip.com - Téléchargeur de Vidéos Reddit",
+    networkFamilyTwitter: "TwitsClip.com - Téléchargeur de Vidéos Twitter / X",
   },
   it: {
     downloadProcessing: "Elaborazione del download...",
@@ -81,6 +96,9 @@ const extraTranslations: Record<Language, ExtraTranslations> = {
     pastedSuccess: "Incollato!",
     downloadError: "Errore durante il download del file. Riprova.",
     connectionError: "Errore di connessione con il motore di download.",
+    networkFamilyTitle: "FAMIGLIA CLIP NETWORK",
+    networkFamilyReddit: "ReddClip.com - Scarica Video da Reddit",
+    networkFamilyTwitter: "TwitsClip.com - Scarica Video da Twitter / X",
   },
   pt: {
     downloadProcessing: "Processando download...",
@@ -92,6 +110,9 @@ const extraTranslations: Record<Language, ExtraTranslations> = {
     pastedSuccess: "Colado!",
     downloadError: "Erro ao baixar o arquivo. Tente novamente.",
     connectionError: "Erro de conexão com o motor de download.",
+    networkFamilyTitle: "FAMÍLIA CLIP NETWORK",
+    networkFamilyReddit: "ReddClip.com - Baixar Vídeos do Reddit",
+    networkFamilyTwitter: "TwitsClip.com - Baixar Vídeos do Twitter / X",
   },
   id: {
     downloadProcessing: "Memproses unduhan...",
@@ -103,6 +124,9 @@ const extraTranslations: Record<Language, ExtraTranslations> = {
     pastedSuccess: "Ditempel!",
     downloadError: "Gagal mengunduh berkas. Silakan coba lagi.",
     connectionError: "Kesalahan koneksi dengan mesin pengunduh.",
+    networkFamilyTitle: "KELUARGA JARINGAN CLIP",
+    networkFamilyReddit: "ReddClip.com - Pengunduh Video Reddit",
+    networkFamilyTwitter: "TwitsClip.com - Pengunduh Video Twitter / X",
   },
   ja: {
     downloadProcessing: "ダウンロードを処理中...",
@@ -114,6 +138,9 @@ const extraTranslations: Record<Language, ExtraTranslations> = {
     pastedSuccess: "貼り付け完了!",
     downloadError: "ファイルのダウンロード中にエラーが発生しました。もう一度お試しください。",
     connectionError: "ダウンロードエンジンとの通信エラーが発生しました。",
+    networkFamilyTitle: "CLIP ネットワークファミリー",
+    networkFamilyReddit: "ReddClip.com - Reddit 動画ダウンローダー",
+    networkFamilyTwitter: "TwitsClip.com - Twitter / X 動画ダウンローダー",
   },
   ko: {
     downloadProcessing: "다운로드 처리 중...",
@@ -125,6 +152,9 @@ const extraTranslations: Record<Language, ExtraTranslations> = {
     pastedSuccess: "붙여넣기 완료!",
     downloadError: "파일을 다운로드하는 중 오류가 발생했습니다. 다시 시도해 주세요.",
     connectionError: "다운로드 엔진과의 연결 오류가 발생했습니다.",
+    networkFamilyTitle: "클립 네트워크 패밀리",
+    networkFamilyReddit: "ReddClip.com - 레딧 동영상 다운로더",
+    networkFamilyTwitter: "TwitsClip.com - 트위터 / X 동영상 다운로더",
   },
   pl: {
     downloadProcessing: "Przetwarzanie pobierania...",
@@ -136,6 +166,9 @@ const extraTranslations: Record<Language, ExtraTranslations> = {
     pastedSuccess: "Wklejono!",
     downloadError: "Błąd podczas pobierania pliku. Spróbuj ponownie.",
     connectionError: "Błąd połączenia z silnikiem pobierania.",
+    networkFamilyTitle: "RODZINA SIECI CLIP",
+    networkFamilyReddit: "ReddClip.com - Pobieranie filmów z Reddit",
+    networkFamilyTwitter: "TwitsClip.com - Pobieranie filmów z Twitter / X",
   },
   ru: {
     downloadProcessing: "Обработка загрузки...",
@@ -147,6 +180,9 @@ const extraTranslations: Record<Language, ExtraTranslations> = {
     pastedSuccess: "Вставлено!",
     downloadError: "Ошибка при загрузке файла. Пожалуйста, попробуйте еще раз.",
     connectionError: "Ошибка соединения с механизмом загрузки.",
+    networkFamilyTitle: "СЕМЕЙСТВО CLIP NETWORK",
+    networkFamilyReddit: "ReddClip.com - Скачать видео с Reddit",
+    networkFamilyTwitter: "TwitsClip.com - Скачать видео с Twitter / X",
   },
   tr: {
     downloadProcessing: "İndirme işleniyor...",
@@ -158,6 +194,9 @@ const extraTranslations: Record<Language, ExtraTranslations> = {
     pastedSuccess: "Yapıştırıldı!",
     downloadError: "Dosya indirilirken hata oluştu. Lütfen tekrar deneyin.",
     connectionError: "İndirme motoruyla bağlantı hatası.",
+    networkFamilyTitle: "CLIP AĞ AİLESİ",
+    networkFamilyReddit: "ReddClip.com - Reddit Video İndirici",
+    networkFamilyTwitter: "TwitsClip.com - Twitter / X Video İndirici",
   },
   uk: {
     downloadProcessing: "Обробка завантаження...",
@@ -169,6 +208,9 @@ const extraTranslations: Record<Language, ExtraTranslations> = {
     pastedSuccess: "Вставлено!",
     downloadError: "Помилка під час завантаження файлу. Спробуйте ще раз.",
     connectionError: "Помилка з'єднання з механізмом завантаження.",
+    networkFamilyTitle: "СІМЕЙСТВО CLIP NETWORK",
+    networkFamilyReddit: "ReddClip.com - Завантажити відео з Reddit",
+    networkFamilyTwitter: "TwitsClip.com - Завантажити відео з Twitter / X",
   },
   zh: {
     downloadProcessing: "正在处理下载...",
@@ -180,6 +222,9 @@ const extraTranslations: Record<Language, ExtraTranslations> = {
     pastedSuccess: "已粘贴！",
     downloadError: "下载文件时出错，请重试。",
     connectionError: "与下载引擎的连接错误。",
+    networkFamilyTitle: "CLIP 家族系列工具",
+    networkFamilyReddit: "ReddClip.com - Reddit 视频下载器",
+    networkFamilyTwitter: "TwitsClip.com - Twitter / X 视频下载器",
   },
 };
 

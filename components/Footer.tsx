@@ -66,6 +66,41 @@ export const Footer: React.FC<FooterProps> = ({ dict, currentLang, onLanguageCha
           </div>
         </div>
 
+        {/* Cross-network Family Links */}
+        <div className="space-y-2 pt-2 border-t border-slate-800/40">
+          <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
+            {dict.networkFamilyTitle || 'CLIP NETWORK FAMILY'}
+          </p>
+          <div className="flex flex-wrap items-center justify-center gap-3 text-xs">
+            <a
+              href="https://reddclip.com"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-slate-400 hover:text-[#ff4500] transition"
+            >
+              {dict.networkFamilyReddit || 'ReddClip.com - Reddit Video Downloader'}
+            </a>
+            <span className="text-slate-700">•</span>
+            <a
+              href="https://twitsclip.com"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-slate-400 hover:text-[#1d9bf0] transition"
+            >
+              {dict.networkFamilyTwitter || 'TwitsClip.com - Twitter / X Video Downloader'}
+            </a>
+            <span className="text-slate-700">•</span>
+            <a
+              href="https://tokyclip.com"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-slate-400 hover:text-[#fe2c55] transition"
+            >
+              {dict.networkFamilyTikTok || 'TokyClip.com - TikTok Video Downloader'}
+            </a>
+          </div>
+        </div>
+
         {/* Bottom Language Selector */}
         <div className="pt-2 flex justify-center">
           <LanguageDropdown

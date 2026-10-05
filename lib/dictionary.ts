@@ -154,6 +154,10 @@ export interface Translation {
   pastedSuccess?: string;
   downloadError?: string;
   connectionError?: string;
+  networkFamilyTitle?: string;
+  networkFamilyReddit?: string;
+  networkFamilyTwitter?: string;
+  networkFamilyTikTok?: string;
 }
 
 // Diccionarios completos para los 14 idiomas
